@@ -22,29 +22,41 @@ class Vector {
 class Actor {
   constructor(pos = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0)) {
     if ((pos instanceof Vector) && (size instanceof Vector) && (speed instanceof Vector)) {
-      // writable properties
       this.pos = pos;
       this.size = size;
       this.speed = speed;
-
-      // readonly properties
-      Object.defineProperty(this, 'left', {value: this.pos.x});
-      Object.defineProperty(this, 'top', {value: this.pos.y});
-      Object.defineProperty(this, 'right', {value: this.pos.x + this.size.x});
-      Object.defineProperty(this, 'bottom', {value: this.pos.y + this.size.y});              
-      Object.defineProperty(this, 'type', {value: 'actor', configurable: true});   
-
     } else {
       throw new Error('Все аргументы конструктора должны быть типа Vector');
     }
   }
+
+  get type() {
+    return 'actor';
+  }
+
+  get left() {
+    return Math.min(this.pos.x, this.pos.x + this.size.x);
+  }
+
+  get right() {
+    return Math.max(this.pos.x, this.pos.x + this.size.x);
+  }
+
+  get top() {
+    return Math.min(this.pos.y, this.pos.y + this.size.y);
+  }
+
+  get bottom() {
+    return Math.max(this.pos.y, this.pos.y + this.size.y);
+  }
+
 
   act() {
     //
   }
 
   isIntersect(actor) {
-      if((typeof actor !=='undefined') && (actor instanceof Actor)) {
+      if(typeof actor !=='undefined' && actor instanceof Actor) {
         
         if (actor === this) 
           return false;
@@ -59,7 +71,6 @@ class Actor {
             && (this.bottom <= actor.bottom) && (this.bottom > actor.top))
         || ((this.right >= actor.right) && (this.left <= actor.left) 
             && (this.bottom >= actor.bottom) && (this.top <= actor.top))
-        // && ((actor.size.x > 0) && (actor.size.y > 0))
         ;
 
       } else {
@@ -77,12 +88,15 @@ class Level {
     this.actors = actors;
 
     // Calculated properties
-    // for(let [index, actor] in this.actors) console.log(actor);
-    this.player = this.actors.find(actor => (actor.type === 'player')); // ???
+    // this.player = this.actors.find(actor => (actor.type === 'player')); // ???
     this.height = this.grid.length;
     this.width = this.grid.length ? Math.max(...this.grid.map(row => row.length)) : 0;
     this.status = null;
     this.finishDelay = 1;
+  }
+
+  get player() {
+    return this.actors.find(actor => (actor.type === 'player'));
   }
 
   isFinished() {
@@ -98,15 +112,17 @@ class Level {
   }  
 
   obstacleAt(pos, size) {
-    if((pos instanceof Vector) && (size instanceof Vector)) {
+    if(pos instanceof Vector && size instanceof Vector) {
       
-      if ((pos.x < 0) || (pos.x + size.x >= this.width)  || (pos.y < 0))
+      if (pos.x < 0 // Wall is above
+        || pos.x + size.x >= this.width  // Wall is to the right
+        || pos.y < 0 // Wall is to the left
+        || this.grid[Math.floor(pos.x)][Math.floor(pos.y)] === 'wall') // Wall is inside
         return 'wall';
 
-      if (pos.y + size.y >= this.height)
+      if (pos.y + size.y >= this.height
+        || this.grid[Math.floor(pos.x)][Math.floor(pos.y)] === 'lava')
         return 'lava';
-
-
 
     } else {
       throw new Error('Аргументы метода obstacleAt должны быть типа Vector');
@@ -121,7 +137,8 @@ class Level {
   }
 
   noMoreActors(type) {
-    return this.actors.length === 0 || this.actors.filter(a => a.type === type).length !== 0;
+    return this.actors.length === 0 
+    || this.actors.filter(a => a.type === type).length === 0;
   }
 
   playerTouched(type, actor = null) {
@@ -200,8 +217,11 @@ class Fireball extends Actor {
     this.pos = pos;
     this.speed = speed;
 
-    Object.defineProperty(this, 'type', {value: 'fireball'});
     this.size = new Vector(1, 1);
+  }
+
+  get type() {
+    return 'fireball';
   }
 
   getNextPosition(time = 1) {
@@ -255,11 +275,14 @@ class Coin extends Actor {
     this.pos = this.pos.plus(new Vector(0.2, 0.1));
     this.size = new Vector(0.6, 0.6);
  
-    Object.defineProperty(this, 'type', {value: 'coin'});
     this.springSpeed = 8;
     this.springDist = 0.07;
     this.spring = Math.random() * 2 * Math.PI;
     this.startPos = this.pos;
+  }
+
+  get type() {
+    return 'coin';
   }
 
   updateSpring(time = 1) {
@@ -271,10 +294,7 @@ class Coin extends Actor {
   }
 
   getNextPosition(time = 1) {
-    console.log(this.spring);
     this.updateSpring(time);
-    console.log(this.spring);
-
     return this.startPos.plus(this.getSpringVector());
   }
 
@@ -289,174 +309,41 @@ class Player extends Actor {
     this.pos = this.pos.plus(new Vector(0, -0.5));
     this.size = new Vector(0.8, 1.5);
     this.speed = new Vector(0, 0);
+  }
 
-    Object.defineProperty(this, 'type', {value: 'player'});    
+  get type() {
+    return 'player';
   }
 }
 
-
-const grid = [
-  [undefined, undefined],
-  ['wall', 'wall']
+const schemas = [
+  [
+    '         ',
+    '         ',
+    '    =    ',
+    '       o ',
+    '     !xxx',
+    ' @       ',
+    'xxx!     ',
+    '         '
+  ],
+  [
+    '      v  ',
+    '    v    ',
+    '  v      ',
+    '        o',
+    '        x',
+    '@   x    ',
+    'x        ',
+    '         '
+  ]
 ];
+const actorDict = {
+  '@': Player,
+  'v': FireRain,
+  '=': HorizontalFireball
+}
+const parser = new LevelParser(actorDict);
+runGame(schemas, parser, DOMDisplay)
+  .then(() => console.log('Вы выиграли приз!'));
 
-const player = new Player();
-const fireball = new Fireball();
-const coin = new Coin();
-
-const level = new Level(grid, [ coin, player, fireball ]);
-console.log(level.player === player);
-
-// console.log(level.noMoreActors('player'));
-// console.log(level.noMoreActors('qwerty'));
-
-/* ==== Testing Coin class ==== */
-// const position = new Vector(5, 5);
-// const coin = new Coin(position);
-// console.log(coin.getNextPosition());
-// console.log(coin.pos);
-// console.log(position.plus(new Vector(0.2, 0.1)));
-
-/* ==== Testing Fireball class ==== */
-// const time = 5;
-// const speed = new Vector(1, 0);
-// const position = new Vector(5, 5);
-
-// const ball = new Fireball(position, speed);
-// const level = new Level([
-//  '                ',
-//  '                ',
-//  '                ',
-//  '                ',
-//  '                ',
-//  '                ',
-//  '                ',
-// ]);
-// ball.act(1, level);
-// console.log(ball.pos);
-
-
-/* ==== Testing LevelParser class ==== */
-// const plan = [
-//   ' @ ',
-//   'x!x'
-// ];
-
-// const actorsDict = Object.create(null);
-// actorsDict['@'] = Actor;
-
-// const parser = new LevelParser(actorsDict);
-// const level = parser.parse(plan);
-
-// level.grid.forEach((line, y) => {
-//   line.forEach((cell, x) => console.log(`(${x}:${y}) ${cell}`));
-// });
-
-// level.actors.forEach(actor => console.log(`(${actor.pos.x}:${actor.pos.y}) ${actor.type}`));
-
-
-/* ==== Testing Vector class ==== */
-// const start = new Vector(30, 50);
-// const moveTo = new Vector(5, 10);
-
-// const finish = start.plus(moveTo.times(2));
-
-// const finish = start.plus(123);
-// console.log(`Исходное расположение: ${start.x}:${start.y}`);
-// console.log(`Текущее расположение: ${finish.x}:${finish.y}`);
-
-
-/* ==== Testing Actor class ==== */
-// console.log('========');
-
-// const items = new Map();
-// const player = new Actor();
-// items.set('Игрок', player);
-// items.set('Первая монета', new Actor(new Vector(10, 10)));
-// items.set('Вторая монета', new Actor(new Vector(15, 5)));
-
-
-// function position(item) {
-//   return ['left', 'top', 'right', 'bottom']
-//     .map(side => `${side}: ${item[side]}`)
-//     .join(', ');  
-// }
-
-// function movePlayer(x, y) {
-//   player.pos = player.pos.plus(new Vector(x, y));
-// }
-
-// function status(item, title) {
-//   console.log(`${title}: ${position(item)}`);
-//   if (player.isIntersect(item)) {
-//     console.log(`Игрок подобрал ${title}`);
-//   }
-// }
-
-// items.forEach(status);
-// movePlayer(10, 10);
-// items.forEach(status);
-// movePlayer(5, -5);
-// items.forEach(status);
-
-
-// let first = new Actor(new Vector(0, 0), new Vector(2, 2));
-// let second = new Actor(new Vector(0, 0), new Vector(1, 1));
-
-// console.log('Первый', position(first));
-// console.log('Второй', position(second));
-// console.log(first.isIntersect(second));
-
-
-/* ==== Testing Level class ==== */
-// console.log('========');
-
-// const grid = [
-//   [undefined, undefined],
-//   ['wall', 'wall']
-// ];
-
-// function MyCoin(title) {
-//   this.type = 'coin';
-//   this.title = title;
-// }
-// MyCoin.prototype = Object.create(Actor);
-// MyCoin.constructor = MyCoin;
-
-// class MyCoin extends Actor {
-//   constructor(title) {
-//     super();
-
-//     this.type = 'coin';
-//     this.title = title;
-//   }
-// }
-
-
-
-// const goldCoin = new MyCoin('Золото');
-// const bronzeCoin = new MyCoin('Бронза');
-// const player = new Actor();
-// const fireball = new Actor();
-
-// // console.log(goldCoin);
-
-// const level = new Level(grid, [ goldCoin, bronzeCoin, player, fireball ]);
-
-// level.playerTouched('coin', goldCoin);
-// level.playerTouched('coin', bronzeCoin);
-
-// if (level.noMoreActors('coin')) {
-//   console.log('Все монеты собраны');
-//   console.log(`Статус игры: ${level.status}`);
-// }
-
-// const obstacle = level.obstacleAt(new Vector(1, 1), player.size);
-// if (obstacle) {
-//   console.log(`На пути препятствие: ${obstacle}`);
-// }
-
-// const otherActor = level.actorAt(player);
-// if (otherActor === fireball) {
-//   console.log('Пользователь столкнулся с шаровой молнией');
-// }
