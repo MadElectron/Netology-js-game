@@ -113,16 +113,22 @@ class Level {
 
   obstacleAt(pos, size) {
     if(pos instanceof Vector && size instanceof Vector) {
-      
-      if (pos.x < 0 // Wall is above
-        || pos.x + size.x >= this.width  // Wall is to the right
-        || pos.y < 0 // Wall is to the left
-        || this.grid[Math.floor(pos.x)][Math.floor(pos.y)] === 'wall') // Wall is inside
-        return 'wall';
+      // console.log(pos.x, pos.y,  this.grid[Math.trunc(pos.y)]);
 
       if (pos.y + size.y >= this.height
-        || this.grid[Math.floor(pos.x)][Math.floor(pos.y)] === 'lava')
+        || this.grid[Math.trunc(pos.y) + Math.trunc(size.y)]
+        [Math.trunc(pos.x) + Math.trunc(size.x)] === 'lava')
+        // || this.grid[Math.trunc(pos.y)][Math.trunc(pos.x)] === 'lava')
         return 'lava';
+      
+      if (pos.x < 0 // Wall is to the left
+        || pos.x + size.x >= this.width  // Wall is to the right
+        || pos.y < 0 // Wall is above
+        || this.grid[Math.trunc(pos.y) + Math.trunc(size.y)]
+            [Math.trunc(pos.x) + Math.trunc(size.x)] === 'wall') // Wall is inside
+        // || this.grid[Math.trunc(pos.y+size.y)][Math.trunc(pos.x+size.x)] === 'wall') // Wall is inside
+        // || this.grid[Math.trunc(pos.y)][Math.trunc(pos.x)] === 'wall') // Wall is inside
+        return 'wall';
 
     } else {
       throw new Error('Аргументы метода obstacleAt должны быть типа Vector');
@@ -143,7 +149,7 @@ class Level {
 
   playerTouched(type, actor = null) {
     if (!this.status) {
-      if ((type === 'lava') || type === 'fireball')
+      if (type === 'lava' || type === 'fireball')
         this.status = 'lost';
       if (type === 'coin') {
 
@@ -234,7 +240,10 @@ class Fireball extends Actor {
 
   act(time, level) {
     let nextPos = this.getNextPosition(time);
-    
+    // let sizeX = this.speed.x < 0 ? 0 : this.size.x;
+    // let sizeY = this.speed.y < 0 ? 0 : this.size.y;
+    // let size = new Vector(sizeX, sizeY)
+
     if (typeof level.obstacleAt(nextPos, this.size) === 'undefined') {
       this.pos = nextPos;
     } else {
@@ -315,35 +324,3 @@ class Player extends Actor {
     return 'player';
   }
 }
-
-const schemas = [
-  [
-    '         ',
-    '         ',
-    '    =    ',
-    '       o ',
-    '     !xxx',
-    ' @       ',
-    'xxx!     ',
-    '         '
-  ],
-  [
-    '      v  ',
-    '    v    ',
-    '  v      ',
-    '        o',
-    '        x',
-    '@   x    ',
-    'x        ',
-    '         '
-  ]
-];
-const actorDict = {
-  '@': Player,
-  'v': FireRain,
-  '=': HorizontalFireball
-}
-const parser = new LevelParser(actorDict);
-runGame(schemas, parser, DOMDisplay)
-  .then(() => console.log('Вы выиграли приз!'));
-

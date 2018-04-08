@@ -10,5 +10,75 @@
 <body>
   <script src="https://netology-code.github.io/js-game/js/app.js"></script>
   <script src="./game.js"></script>
+  <script>
+    const schemas = [
+      [
+        ' xx = xx ',
+        '@        ',
+        '   o     ',
+        'xxxx   !!',
+        '         ',
+      ],
+      [
+        '         ',
+        '         ',
+        'xxxxxxx  ',
+        '         ',
+        '         ',
+        '         ',
+        '@  o     ',
+        'xxxx   !!',
+        '         ',
+      ],
+      [
+        '         ',
+        '         ',
+        '         ',
+        '      x o',
+        '      xxx',
+        '@        ',
+        'xxx!     ',
+        '         '
+      ],
+      [
+        '         ',
+        'x  =    x',
+        '         ',
+        '       o ',
+        '     !xxx',
+        '@         ',
+        'xxx!     ',
+        '        '
+      ],      
+      [
+        '      v  ',
+        '  x      ',
+        '  v      ',
+        '        o',
+        '        x',
+        '@   x    ',
+        'x        ',
+        '         '
+      ]
+    ];
+    const actorDict = {
+      'o': Coin,
+      '@': Player,
+      'v': FireRain,
+      '=': HorizontalFireball,
+      '|': VerticalFireball,
+    }
+
+    // const parser = new LevelParser(actorDict);
+
+    // const level = parser.parse(schemas[0]);
+    // runLevel(level, DOMDisplay)
+    //   .then(status => alert(`Игрок ${status}`));
+
+  const parser = new LevelParser(actorDict);
+  runGame(schemas, parser, DOMDisplay)
+    .then(() => alert('Вы выиграли!'));
+
+  </script>
 </body>
 </html>
