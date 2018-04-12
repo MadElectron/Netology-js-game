@@ -59,25 +59,100 @@
         '@   x    ',
         'x        ',
         '         '
-      ]
+      ],
+      [
+        "     v                 ",
+        "                       ",
+        "                       ",
+        "  |                    ",
+        "                       ",
+        "                       ",
+        "  o                 o  ",
+        "  x               = x  ",
+        "  x          o o    x  ",
+        "  x @        xxxxx  x  ",
+        "  xxxxx             x  ",
+        "      x!!!!!!!!!!!!!x  ",
+        "      xxxxxxxxxxxxxxx  ",
+        "                       "
+      ],
+      [
+        "        |           |  ",
+        "                       ",
+        "                       ",
+        "                       ",
+        "                       ",
+        "                       ",
+        "                       ",
+        "                       ",
+        "                       ",
+        "     |                 ",
+        "                       ",
+        "         =      |      ",
+        " @ |  o            o   ",
+        "xxxxxxxxx!!!!!!!xxxxxxx",
+        "                       "
+      ],
+      [
+        "                       ",
+        "                       ",
+        "                       ",
+        "    o                  ",
+        "    x      | x!!x=     ",
+        "         x             ",
+        "                      x",
+        "                       ",
+        "                       ",
+        "                       ",
+        "               xxx     ",
+        "                       ",
+        "                       ",
+        "       xxx  |          ",
+        "                       ",
+        " @                     ",
+        "xxx                    ",
+        "                       "
+      ], [
+        "   v         v",
+        "              ",
+        "         !o!  ",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "         xxx  ",
+        "          o   ",
+        "        =     ",
+        "  @           ",
+        "  xxxx        ",
+        "  |           ",
+        "      xxx    x",
+        "              ",
+        "          !   ",
+        "              ",
+        "              ",
+        " o       x    ",
+        " x      x     ",
+        "       x      ",
+        "      x       ",
+        "   xx         ",
+        "              "
+      ],
     ];
+
     const actorDict = {
       'o': Coin,
       '@': Player,
       'v': FireRain,
       '=': HorizontalFireball,
       '|': VerticalFireball,
-    }
+    };
 
-    // const parser = new LevelParser(actorDict);
+    const parser = new LevelParser(actorDict);
 
-    // const level = parser.parse(schemas[0]);
-    // runLevel(level, DOMDisplay)
-    //   .then(status => alert(`Игрок ${status}`));
-
-  const parser = new LevelParser(actorDict);
-  runGame(schemas, parser, DOMDisplay)
-    .then(() => alert('Вы выиграли!'));
+    const dt = new Date();
+    runGame(schemas, parser, DOMDisplay)
+      .then(() => alert(`Вы выиграли! Потрачено ${(new Date() - dt)/1000} с`));
 
   </script>
 </body>
